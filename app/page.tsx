@@ -121,6 +121,51 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+            {/* FARM OF THE WEEK SECTION */}
+      <div className="relative z-10 bg-[#2d6a4f]/10 backdrop-blur-sm py-16 border-t border-[#b8946e]">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-center text-[#2d6a4f] mb-12">🌟 Farm of the Week</h2>
+          
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-[#b8946e] max-w-4xl mx-auto">
+            <div className="flex flex-col md:flex-row">
+              {/* Farmer Image Placeholder */}
+              <div className="md:w-1/3 bg-[#e9d5b5] flex items-center justify-center p-8 min-h-[250px]">
+                <span className="text-8xl">👨‍🌾</span>
+              </div>
+              
+              {/* Farmer Details */}
+              <div className="md:w-2/3 p-8">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-3xl font-bold text-[#2d6a4f]">John's Fresh Farm</h3>
+                    <p className="text-[#5a3e2b] text-lg">Otukpo, Benue State</p>
+                  </div>
+                  <span className="bg-[#2d6a4f] text-white px-4 py-1 rounded-full text-sm font-bold">🌟 Featured</span>
+                </div>
+                
+                <p className="text-[#5a3e2b] mt-4 text-lg leading-relaxed">
+                  "Agro Shield K' Idoma transformed my farming business. I now sell directly to restaurants and earn 40% more than before. My tomatoes are the freshest in the region!"
+                </p>
+                
+                <div className="mt-6 flex gap-4 flex-wrap">
+                  <span className="bg-[#fdf6e3] px-4 py-2 rounded-full border border-[#b8946e] text-sm">🌱 5 years farming</span>
+                  <span className="bg-[#fdf6e3] px-4 py-2 rounded-full border border-[#b8946e] text-sm">🍅 200+ kg sold</span>
+                  <span className="bg-[#fdf6e3] px-4 py-2 rounded-full border border-[#b8946e] text-sm">⭐ 4.9 rating</span>
+                </div>
+                
+                {isLoggedIn && (
+                  <Link 
+                    href="/dashboard/buyer"
+                    className="mt-6 inline-block bg-[#b8946e] text-white px-6 py-3 rounded-md hover:bg-[#9a7a56] shadow-sm transition-all"
+                  >
+                    View John's Products 🛒
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Footer */}
       <footer className="relative z-10 bg-[#3d2b1c] text-[#fdf6e3] py-8 text-center border-t border-[#b8946e]">
