@@ -136,6 +136,7 @@ export default function Sidebar({ isOpen, toggleSidebar, user }: SidebarProps) {
 
               <div className="border-t border-[#b8946e] dark:border-[#2d2d2d] my-2"></div>
 
+              {/* ✅ FIXED SETTINGS LINK */}
               <Link 
                 href="/settings" 
                 className="block p-3 rounded-md hover:bg-[#fdf6e3] dark:hover:bg-[#2d2d2d] transition-colors text-[#5a3e2b] dark:text-gray-300"
