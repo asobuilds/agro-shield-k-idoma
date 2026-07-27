@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -42,6 +43,9 @@ export default function RegisterPage() {
         <h1 className="text-3xl font-bold text-[#2d6a4f] mb-6 text-center">
           Join Agro Shield
         </h1>
+        <Link href="/" className="text-sm text-[#2d6a4f] hover:underline mb-4 block text-center">
+          ← Back to Home
+        </Link>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Full Name</label>
