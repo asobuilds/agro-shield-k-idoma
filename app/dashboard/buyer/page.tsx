@@ -6,8 +6,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { MOCK_PRODUCTS, MOCK_ORDERS, getCachedOrMock } from "@/lib/mockData";
 
-// --- MARKETPLACE GRID COMPONENT (Embedded directly) ---
-function MarketplaceGrid({ products, showDistance, buyerLocation, onAddToCart }: any) {
+// --- MARKETPLACE GRID (Embedded) ---
+function MarketplaceGrid({ products, showDistance, buyerLocation, onAddToCart, onWishlist }: any) {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("default");
 
@@ -22,7 +22,6 @@ function MarketplaceGrid({ products, showDistance, buyerLocation, onAddToCart }:
     return R * c;
   }
 
-  // SAFE CATEGORY EXTRACTION (No Set, no TypeScript errors)
   const allCategories = ["All"];
   products.forEach((p: any) => {
     if (p.category && !allCategories.includes(p.category)) {
@@ -72,7 +71,6 @@ function MarketplaceGrid({ products, showDistance, buyerLocation, onAddToCart }:
 
   return (
     <div>
-      {/* Filter Bar */}
       <div className="flex flex-wrap gap-4 mb-8 justify-between items-center">
         <div className="flex flex-wrap gap-2">
           {categories.map((category) => (
@@ -89,7 +87,6 @@ function MarketplaceGrid({ products, showDistance, buyerLocation, onAddToCart }:
             </button>
           ))}
         </div>
-        
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Sort by:</label>
           <select
@@ -105,7 +102,6 @@ function MarketplaceGrid({ products, showDistance, buyerLocation, onAddToCart }:
         </div>
       </div>
 
-      {/* Product Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {filteredProducts.map((product: any) => (
           <motion.div
@@ -125,19 +121,16 @@ function MarketplaceGrid({ products, showDistance, buyerLocation, onAddToCart }:
             <p className="text-sm text-gray-600">{product.farmerName}</p>
             <p className="text-sm text-gray-500">{product.location}</p>
             <p className="text-[#4CAF50] font-bold text-lg mt-1">₦{product.price}/{product.unit}</p>
-            
             {showDistance && buyerLocation && (
               <p className="text-xs text-[#1a5d3a] font-medium mt-1">
                 {getProximityText(product.location)}
               </p>
             )}
-
             {product.paymentMethod && (
               <div className="mt-2 text-xs bg-gray-50 p-2 rounded border border-gray-200">
                 💳 Pay via: <span className="font-medium">{product.paymentMethod}</span>
               </div>
             )}
-
             <div className="flex gap-2 mt-3">
               {onAddToCart && (
                 <button
@@ -147,10 +140,16 @@ function MarketplaceGrid({ products, showDistance, buyerLocation, onAddToCart }:
                   🛒 Add to Cart
                 </button>
               )}
+              {onWishlist && (
+                <button
+                  onClick={() => onWishlist(product)}
+                  className="flex-1 bg-yellow-500 text-white py-2 rounded-md hover:bg-yellow-600 transition"
+                >
+                  ⭐ Wishlist
+                </button>
+              )}
               <button
-                onClick={() => {
-                  alert(`Contact ${product.farmerName} at ${product.location}`);
-                }}
+                onClick={() => alert(`Contact ${product.farmerName} at ${product.location}`)}
                 className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition"
               >
                 📞 Contact
@@ -172,6 +171,8 @@ export default function BuyerDashboard() {
   const [buyerLocation, setBuyerLocation] = useState<{lat: number, lon: number} | null>(null);
   const [cart, setCart] = useState<any[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [wishlist, setWishlist] = useState<any[]>([]);
+  const [showWishlist, setShowWishlist] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -197,6 +198,9 @@ export default function BuyerDashboard() {
 
     const savedCart = localStorage.getItem("buyer_cart");
     if (savedCart) setCart(JSON.parse(savedCart));
+
+    const savedWishlist = localStorage.getItem("buyer_wishlist");
+    if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
   }, [router]);
 
   if (!user) return <div className="p-10 text-center">Loading...</div>;
@@ -224,6 +228,23 @@ export default function BuyerDashboard() {
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+  const addToWishlist = (product: any) => {
+    if (wishlist.find(item => item.id === product.id)) {
+      alert(`${product.name} is already in your wishlist!`);
+      return;
+    }
+    const newWishlist = [...wishlist, product];
+    setWishlist(newWishlist);
+    localStorage.setItem("buyer_wishlist", JSON.stringify(newWishlist));
+    alert(`${product.name} added to wishlist!`);
+  };
+
+  const removeFromWishlist = (id: string) => {
+    const newWishlist = wishlist.filter(item => item.id !== id);
+    setWishlist(newWishlist);
+    localStorage.setItem("buyer_wishlist", JSON.stringify(newWishlist));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#fdf6e3] via-[#e9d5b5] to-[#c8a87c] p-6 dark:from-[#121212] dark:via-[#1a1a1a] dark:to-[#0d0d0d]">
       {isOffline && (
@@ -244,6 +265,12 @@ export default function BuyerDashboard() {
             className="bg-[#1a5d3a] text-white px-4 py-2 rounded-md hover:bg-[#0f3d25] transition flex items-center gap-2"
           >
             🛒 Cart ({cart.length})
+          </button>
+          <button
+            onClick={() => setShowWishlist(!showWishlist)}
+            className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition flex items-center gap-2"
+          >
+            ⭐ Wishlist ({wishlist.length})
           </button>
           <button
             onClick={() => {
@@ -291,6 +318,46 @@ export default function BuyerDashboard() {
         </div>
       )}
 
+      {/* Wishlist Sidebar */}
+      {showWishlist && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowWishlist(false)}></div>
+          <div className="relative bg-white w-full max-w-md p-6 overflow-y-auto shadow-2xl dark:bg-[#1a1a1a]">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-[#1a5d3a] dark:text-[#4ade80]">⭐ Your Wishlist</h2>
+              <button onClick={() => setShowWishlist(false)} className="text-2xl hover:text-[#1a5d3a]">✕</button>
+            </div>
+            {wishlist.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Your wishlist is empty.</p>
+            ) : (
+              <div className="space-y-4">
+                {wishlist.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center border-b pb-3 dark:border-[#2d2d2d]">
+                    <div>
+                      <p className="font-bold text-[#1a5d3a] dark:text-[#4ade80]">{item.name}</p>
+                      <p className="text-sm text-gray-500">₦{item.price}/{item.unit}</p>
+                      <p className="text-xs text-gray-400">From: {item.farmerName}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          addToCart(item);
+                          removeFromWishlist(item.id);
+                        }}
+                        className="bg-[#1a5d3a] text-white px-3 py-1 rounded-md text-sm"
+                      >
+                        🛒 Buy Now
+                      </button>
+                      <button onClick={() => removeFromWishlist(item.id)} className="text-red-500 hover:text-red-700">✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Marketplace Link */}
       <div className="bg-white/80 backdrop-blur-md p-6 rounded-xl shadow-lg border border-[#b8946e] mb-8 dark:bg-[#1a1a1a] dark:border-[#2d2d2d]">
         <div className="flex justify-between items-center flex-wrap gap-4">
@@ -315,6 +382,7 @@ export default function BuyerDashboard() {
           showDistance={true}
           buyerLocation={buyerLocation}
           onAddToCart={addToCart}
+          onWishlist={addToWishlist}
         />
       </div>
     </div>

@@ -6,36 +6,42 @@ import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  
+  // Base fields for all users
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
     role: "farmer",
     password: "",
+    // Farmer-specific
+    farmName: "",
+    farmLocation: "",
+    // Buyer-specific
+    businessType: "",
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
+    // Basic validation
     if (!form.name || !form.email || !form.phone || !form.password) {
-      setError("All fields are required.");
+      setError("Please fill in all required fields.");
       setLoading(false);
       return;
     }
 
+    // Save user data to localStorage
     const userData = { ...form, id: Date.now().toString() };
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("isLoggedIn", "true");
 
-    // Force redirect after 500ms
-    setTimeout(() => {
-      setLoading(false);
-      router.push(`/dashboard/${form.role}`);
-    }, 500);
+    // DIRECT REDIRECT (No timeout, instant)
+    router.push(`/dashboard/${form.role}`);
   };
 
   return (
@@ -46,9 +52,11 @@ export default function RegisterPage() {
           ← Back to Home
         </Link>
         {error && <div className="bg-red-100 text-red-700 p-3 rounded-md mb-4 dark:bg-red-900/30 dark:text-red-300">{error}</div>}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Common Fields for Everyone */}
           <div>
-            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Full Name</label>
+            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Full Name *</label>
             <input
               type="text"
               value={form.name}
@@ -59,7 +67,7 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Email</label>
+            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Email *</label>
             <input
               type="email"
               value={form.email}
@@ -70,7 +78,7 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Phone</label>
+            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Phone *</label>
             <input
               type="tel"
               value={form.phone}
@@ -81,7 +89,7 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">I am a...</label>
+            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">I am a... *</label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
@@ -93,7 +101,7 @@ export default function RegisterPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Password</label>
+            <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Password *</label>
             <input
               type="password"
               value={form.password}
@@ -103,6 +111,46 @@ export default function RegisterPage() {
               placeholder="Min 6 characters"
             />
           </div>
+
+          {/* ROLE-SPECIFIC FIELDS */}
+          {form.role === "farmer" && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Farm Name</label>
+                <input
+                  type="text"
+                  value={form.farmName}
+                  onChange={(e) => setForm({ ...form, farmName: e.target.value })}
+                  className="w-full p-3 border border-[#b8946e] rounded-md focus:ring-2 focus:ring-[#2d6a4f] bg-white/50 dark:bg-[#2d2d2d] dark:border-[#3d3d3d] dark:text-white placeholder-gray-400"
+                  placeholder="e.g., John's Fresh Farm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Farm Location / Nearest Bus Stop</label>
+                <input
+                  type="text"
+                  value={form.farmLocation}
+                  onChange={(e) => setForm({ ...form, farmLocation: e.target.value })}
+                  className="w-full p-3 border border-[#b8946e] rounded-md focus:ring-2 focus:ring-[#2d6a4f] bg-white/50 dark:bg-[#2d2d2d] dark:border-[#3d3d3d] dark:text-white placeholder-gray-400"
+                  placeholder="e.g., Otukpo Main Market or GPS coordinates"
+                />
+              </div>
+            </>
+          )}
+
+          {form.role === "buyer" && (
+            <div>
+              <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Business Type</label>
+              <input
+                type="text"
+                value={form.businessType}
+                onChange={(e) => setForm({ ...form, businessType: e.target.value })}
+                className="w-full p-3 border border-[#b8946e] rounded-md focus:ring-2 focus:ring-[#2d6a4f] bg-white/50 dark:bg-[#2d2d2d] dark:border-[#3d3d3d] dark:text-white placeholder-gray-400"
+                placeholder="e.g., Restaurant, Supermarket, Individual"
+              />
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
