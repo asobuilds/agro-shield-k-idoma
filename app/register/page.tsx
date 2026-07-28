@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,7 +20,6 @@ export default function RegisterPage() {
   const [farmLocation, setFarmLocation] = useState("");
   const [businessType, setBusinessType] = useState("");
 
-  // Form validation
   const validate = () => {
     if (!name.trim()) { setError("Full name is required"); return false; }
     if (!email.trim() || !email.includes("@")) { setError("Valid email is required"); return false; }
@@ -33,7 +30,7 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault();  // 👈 THIS STOPS THE PAGE FROM RELOADING
     setLoading(true);
     setError("");
 
@@ -53,7 +50,6 @@ export default function RegisterPage() {
       createdAt: new Date().toISOString(),
     };
 
-    // Add role-specific fields
     if (role === "farmer") {
       userData.farmName = farmName;
       userData.farmLocation = farmLocation;
@@ -66,8 +62,10 @@ export default function RegisterPage() {
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("isLoggedIn", "true");
 
-    // Redirect using router.replace (instant, no page reload)
-    router.replace(`/dashboard/${role}`);
+    // ✅ GUARANTEED REDIRECT (No router, no hydration issues)
+    setTimeout(() => {
+      window.location.href = `/dashboard/${role}`;
+    }, 300);
   };
 
   return (
@@ -80,7 +78,6 @@ export default function RegisterPage() {
         {error && <div className="bg-red-100 text-red-700 p-3 rounded-md mb-4 dark:bg-red-900/30 dark:text-red-300">{error}</div>}
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Full Name *</label>
             <input
@@ -92,7 +89,6 @@ export default function RegisterPage() {
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Email *</label>
             <input
@@ -104,7 +100,6 @@ export default function RegisterPage() {
             />
           </div>
 
-          {/* Phone */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Phone *</label>
             <input
@@ -116,7 +111,6 @@ export default function RegisterPage() {
             />
           </div>
 
-          {/* Role Selection */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">I am a... *</label>
             <select
@@ -130,7 +124,6 @@ export default function RegisterPage() {
             </select>
           </div>
 
-          {/* ROLE-SPECIFIC FIELDS (Only show for the right role) */}
           {role === "farmer" && (
             <>
               <div>
@@ -169,7 +162,6 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Password *</label>
             <input
@@ -181,7 +173,6 @@ export default function RegisterPage() {
             />
           </div>
 
-          {/* Confirm Password */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Confirm Password *</label>
             <input
