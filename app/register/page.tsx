@@ -17,42 +17,66 @@ export default function RegisterPage() {
   const [farmLocation, setFarmLocation] = useState("");
   const [businessType, setBusinessType] = useState("");
 
-  const handleRegister = () => {
-    console.log("Button clicked!"); // <-- This will appear in your browser console
+  // SECURITY: Password strength requirements
+  const validatePassword = (pass: string) => {
+    if (pass.length < 8) return "Password must be at least 8 characters";
+    if (!/[A-Z]/.test(pass)) return "Password must contain at least one uppercase letter";
+    if (!/[0-9]/.test(pass)) return "Password must contain at least one number";
+    if (!/[!@#$%^&*]/.test(pass)) return "Password must contain at least one special character (!@#$%^&*)";
+    return null;
+  };
 
+  // SECURITY: Name validation
+  const validateName = (name: string) => {
+    if (name.trim().length < 2) return "Full name must be at least 2 characters";
+    if (!/^[a-zA-Z\s\-]+$/.test(name)) return "Name can only contain letters, spaces, and hyphens";
+    return null;
+  };
+
+  const handleRegister = () => {
     setLoading(true);
     setError("");
 
-    if (!name.trim()) { setError("Full name is required"); setLoading(false); return; }
+    // Validate Name
+    const nameError = validateName(name);
+    if (nameError) { setError(nameError); setLoading(false); return; }
+
+    // Validate Email
     if (!email.trim() || !email.includes("@")) { setError("Valid email is required"); setLoading(false); return; }
-    if (!phone.trim() || phone.length < 10) { setError("Valid phone number is required"); setLoading(false); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
+
+    // Validate Phone
+    if (!phone.trim() || phone.length < 10) { setError("Valid phone number is required (min 10 digits)"); setLoading(false); return; }
+
+    // Validate Password (STRONG)
+    const passwordError = validatePassword(password);
+    if (passwordError) { setError(passwordError); setLoading(false); return; }
+
+    // Validate Confirm Password
     if (password !== confirmPassword) { setError("Passwords do not match"); setLoading(false); return; }
 
+    // Build user object
     const userData: any = {
       id: Date.now().toString(),
-      name,
-      email,
-      phone,
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
       role,
       password,
       createdAt: new Date().toISOString(),
     };
 
     if (role === "farmer") {
-      userData.farmName = farmName;
-      userData.farmLocation = farmLocation;
+      userData.farmName = farmName.trim();
+      userData.farmLocation = farmLocation.trim();
     }
     if (role === "buyer") {
-      userData.businessType = businessType;
+      userData.businessType = businessType.trim();
     }
 
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("isLoggedIn", "true");
 
-    console.log("Redirecting to /dashboard/" + role); // <-- Check console
-
-    // FORCE HARD REDIRECT (0ms delay, direct browser navigation)
+    // FORCE HARD REDIRECT (No Next.js router, no cache)
     setTimeout(() => {
       window.location.href = `/dashboard/${role}`;
     }, 0);
@@ -67,8 +91,8 @@ export default function RegisterPage() {
         </Link>
         {error && <div className="bg-red-100 text-red-700 p-3 rounded-md mb-4 dark:bg-red-900/30 dark:text-red-300">{error}</div>}
         
-        {/* NO FORM TAG – JUST DIV AND BUTTON */}
         <div className="space-y-4">
+          {/* Full Name */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Full Name *</label>
             <input
@@ -76,10 +100,11 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full p-3 border border-[#b8946e] rounded-md focus:ring-2 focus:ring-[#2d6a4f] bg-white/50 dark:bg-[#2d2d2d] dark:border-[#3d3d3d] dark:text-white placeholder-gray-400"
-              placeholder="Enter your full name"
+              placeholder="Enter your full name (letters only)"
             />
           </div>
 
+          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Email *</label>
             <input
@@ -91,6 +116,7 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* Phone */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Phone *</label>
             <input
@@ -102,6 +128,7 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* Role Selection */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">I am a... *</label>
             <select
@@ -153,6 +180,7 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {/* Password with Requirements */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Password *</label>
             <input
@@ -160,10 +188,26 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 border border-[#b8946e] rounded-md focus:ring-2 focus:ring-[#2d6a4f] bg-white/50 dark:bg-[#2d2d2d] dark:border-[#3d3d3d] dark:text-white placeholder-gray-400"
-              placeholder="Min 6 characters"
+              placeholder="Min 8 chars, 1 Uppercase, 1 Number, 1 Special"
             />
+            {/* Password Requirements Display */}
+            <div className="text-xs mt-2 space-y-1">
+              <p className={password.length >= 8 ? "text-green-500" : "text-gray-400 dark:text-gray-500"}>
+                ✓ At least 8 characters
+              </p>
+              <p className={/[A-Z]/.test(password) ? "text-green-500" : "text-gray-400 dark:text-gray-500"}>
+                ✓ At least 1 uppercase letter
+              </p>
+              <p className={/[0-9]/.test(password) ? "text-green-500" : "text-gray-400 dark:text-gray-500"}>
+                ✓ At least 1 number
+              </p>
+              <p className={/[!@#$%^&*]/.test(password) ? "text-green-500" : "text-gray-400 dark:text-gray-500"}>
+                ✓ At least 1 special character (!@#$%^&*)
+              </p>
+            </div>
           </div>
 
+          {/* Confirm Password */}
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Confirm Password *</label>
             <input
@@ -173,9 +217,11 @@ export default function RegisterPage() {
               className="w-full p-3 border border-[#b8946e] rounded-md focus:ring-2 focus:ring-[#2d6a4f] bg-white/50 dark:bg-[#2d2d2d] dark:border-[#3d3d3d] dark:text-white placeholder-gray-400"
               placeholder="Re-enter password"
             />
+            {confirmPassword && password !== confirmPassword && (
+              <p className="text-red-500 text-xs mt-1">Passwords do not match</p>
+            )}
           </div>
 
-          {/* RAW BUTTON WITH LOGGING */}
           <button
             onClick={handleRegister}
             disabled={loading}
