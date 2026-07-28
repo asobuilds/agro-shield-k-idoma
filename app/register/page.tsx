@@ -7,39 +7,26 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Base fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("farmer");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  // Role-specific fields
   const [farmName, setFarmName] = useState("");
   const [farmLocation, setFarmLocation] = useState("");
   const [businessType, setBusinessType] = useState("");
 
-  const validate = () => {
-    if (!name.trim()) { setError("Full name is required"); return false; }
-    if (!email.trim() || !email.includes("@")) { setError("Valid email is required"); return false; }
-    if (!phone.trim() || phone.length < 10) { setError("Valid phone number is required"); return false; }
-    if (password.length < 6) { setError("Password must be at least 6 characters"); return false; }
-    if (password !== confirmPassword) { setError("Passwords do not match"); return false; }
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();  // 👈 THIS STOPS THE PAGE FROM RELOADING
+  const handleRegister = () => {
     setLoading(true);
     setError("");
 
-    if (!validate()) {
-      setLoading(false);
-      return;
-    }
+    if (!name.trim()) { setError("Full name is required"); setLoading(false); return; }
+    if (!email.trim() || !email.includes("@")) { setError("Valid email is required"); setLoading(false); return; }
+    if (!phone.trim() || phone.length < 10) { setError("Valid phone number is required"); setLoading(false); return; }
+    if (password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
+    if (password !== confirmPassword) { setError("Passwords do not match"); setLoading(false); return; }
 
-    // Build user object
     const userData: any = {
       id: Date.now().toString(),
       name,
@@ -58,14 +45,11 @@ export default function RegisterPage() {
       userData.businessType = businessType;
     }
 
-    // Save to localStorage
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("isLoggedIn", "true");
 
-    // ✅ GUARANTEED REDIRECT (No router, no hydration issues)
-    setTimeout(() => {
-      window.location.href = `/dashboard/${role}`;
-    }, 300);
+    // FORCE HARD REDIRECT (No Next.js, no React, no cache)
+    window.location.href = `/dashboard/${role}`;
   };
 
   return (
@@ -77,7 +61,8 @@ export default function RegisterPage() {
         </Link>
         {error && <div className="bg-red-100 text-red-700 p-3 rounded-md mb-4 dark:bg-red-900/30 dark:text-red-300">{error}</div>}
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* NO FORM TAG – JUST DIV AND BUTTON */}
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[#5a3e2b] dark:text-gray-300">Full Name *</label>
             <input
@@ -184,14 +169,15 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* BUTTON INSTEAD OF SUBMIT */}
           <button
-            type="submit"
+            onClick={handleRegister}
             disabled={loading}
             className="w-full bg-[#2d6a4f] text-white py-3 rounded-md hover:bg-[#1b4332] transition-colors dark:bg-[#4ade80] dark:text-[#121212] dark:hover:bg-[#3bbd6e]"
           >
             {loading ? "Creating account..." : "Create Account"}
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );
