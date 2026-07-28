@@ -3,16 +3,175 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { MOCK_PRODUCTS, MOCK_ORDERS, getCachedOrMock } from "@/lib/mockData";
 
+// --- MARKETPLACE GRID COMPONENT (Embedded directly) ---
+function MarketplaceGrid({ products, showDistance, buyerLocation, onAddToCart }: any) {
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [sortBy, setSortBy] = useState("default");
+
+  function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  // SAFE CATEGORY EXTRACTION (No Set, no TypeScript errors)
+  const allCategories = ["All"];
+  products.forEach((p: any) => {
+    if (p.category && !allCategories.includes(p.category)) {
+      allCategories.push(p.category);
+    }
+  });
+  const categories = allCategories;
+
+  let filteredProducts = selectedCategory === "All" 
+    ? products 
+    : products.filter((p: any) => p.category === selectedCategory);
+
+  if (sortBy === "price-low") {
+    filteredProducts.sort((a: any, b: any) => a.price - b.price);
+  } else if (sortBy === "price-high") {
+    filteredProducts.sort((a: any, b: any) => b.price - a.price);
+  } else if (sortBy === "proximity" && buyerLocation) {
+    filteredProducts.sort((a: any, b: any) => {
+      const distA = getDistance(a.location);
+      const distB = getDistance(b.location);
+      return distA - distB;
+    });
+  }
+
+  function getDistance(location: string) {
+    if (!buyerLocation) return Infinity;
+    try {
+      const [lat, lon] = location.split(",").map(Number);
+      if (isNaN(lat) || isNaN(lon)) return Infinity;
+      return calculateDistance(buyerLocation.lat, buyerLocation.lon, lat, lon);
+    } catch {
+      return Infinity;
+    }
+  }
+
+  const getProximityText = (location: string) => {
+    if (!buyerLocation) return "";
+    try {
+      const [lat, lon] = location.split(",").map(Number);
+      if (isNaN(lat) || isNaN(lon)) return "";
+      const dist = calculateDistance(buyerLocation.lat, buyerLocation.lon, lat, lon);
+      return dist < 1 ? "📍 < 1km" : `📍 ${dist.toFixed(1)}km`;
+    } catch {
+      return "";
+    }
+  };
+
+  return (
+    <div>
+      {/* Filter Bar */}
+      <div className="flex flex-wrap gap-4 mb-8 justify-between items-center">
+        <div className="flex flex-wrap gap-2">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                selectedCategory === category
+                  ? "bg-[#1a5d3a] text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Sort by:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+          >
+            <option value="default">Default</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            {buyerLocation && <option value="proximity">Nearest to Me</option>}
+          </select>
+        </div>
+      </div>
+
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {filteredProducts.map((product: any) => (
+          <motion.div
+            key={product.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition border border-gray-100"
+          >
+            <div className="h-48 bg-[#e9d5b5] rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+              {product.imageUrl && product.imageUrl.startsWith("data:") ? (
+                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-5xl">🌾</span>
+              )}
+            </div>
+            <h3 className="font-bold text-lg text-[#1a5d3a]">{product.name}</h3>
+            <p className="text-sm text-gray-600">{product.farmerName}</p>
+            <p className="text-sm text-gray-500">{product.location}</p>
+            <p className="text-[#4CAF50] font-bold text-lg mt-1">₦{product.price}/{product.unit}</p>
+            
+            {showDistance && buyerLocation && (
+              <p className="text-xs text-[#1a5d3a] font-medium mt-1">
+                {getProximityText(product.location)}
+              </p>
+            )}
+
+            {product.paymentMethod && (
+              <div className="mt-2 text-xs bg-gray-50 p-2 rounded border border-gray-200">
+                💳 Pay via: <span className="font-medium">{product.paymentMethod}</span>
+              </div>
+            )}
+
+            <div className="flex gap-2 mt-3">
+              {onAddToCart && (
+                <button
+                  onClick={() => onAddToCart(product)}
+                  className="flex-1 bg-[#1a5d3a] text-white py-2 rounded-md hover:bg-[#0f3d25] transition"
+                >
+                  🛒 Add to Cart
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  alert(`Contact ${product.farmerName} at ${product.location}`);
+                }}
+                className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition"
+              >
+                📞 Contact
+              </button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// --- MAIN BUYER DASHBOARD ---
 export default function BuyerDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [buyerLocation, setBuyerLocation] = useState<{lat: number, lon: number} | null>(null);
+  const [cart, setCart] = useState<any[]>([]);
+  const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -28,22 +187,42 @@ export default function BuyerDashboard() {
     setIsOffline(!navigator.onLine);
     window.addEventListener("online", () => setIsOffline(false));
     window.addEventListener("offline", () => setIsOffline(true));
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setBuyerLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        () => console.log("Location denied")
+      );
+    }
+
+    const savedCart = localStorage.getItem("buyer_cart");
+    if (savedCart) setCart(JSON.parse(savedCart));
   }, [router]);
 
   if (!user) return <div className="p-10 text-center">Loading...</div>;
 
-  const handleSearch = () => {
-    if (!searchQuery.trim()) {
-      setRecommendations([]);
-      return;
+  const addToCart = (product: any) => {
+    const existing = cart.find(item => item.id === product.id);
+    let newCart;
+    if (existing) {
+      newCart = cart.map(item => 
+        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+      );
+    } else {
+      newCart = [...cart, { ...product, quantity: 1 }];
     }
-    setIsSearching(true);
-    const filtered = products.filter(p => 
-      p.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setRecommendations(filtered);
-    setIsSearching(false);
+    setCart(newCart);
+    localStorage.setItem("buyer_cart", JSON.stringify(newCart));
+    alert(`${product.name} added to cart!`);
   };
+
+  const removeFromCart = (id: string) => {
+    const newCart = cart.filter(item => item.id !== id);
+    setCart(newCart);
+    localStorage.setItem("buyer_cart", JSON.stringify(newCart));
+  };
+
+  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#fdf6e3] via-[#e9d5b5] to-[#c8a87c] p-6 dark:from-[#121212] dark:via-[#1a1a1a] dark:to-[#0d0d0d]">
@@ -59,95 +238,84 @@ export default function BuyerDashboard() {
           <p className="text-[#5a3e2b] dark:text-gray-400">Business: {user.businessType || "Individual"}</p>
           <Link href="/" className="text-sm text-[#5a3e2b] dark:text-gray-400 hover:underline mt-2 block">← Back to Home</Link>
         </div>
-        <button
-          onClick={() => {
-            localStorage.clear();
-            router.push("/register");
-          }}
-          className="bg-red-500/80 text-white px-4 py-2 rounded-md hover:bg-red-600"
-        >
-          Logout
-        </button>
-      </div>
-
-      <div className="bg-white/80 backdrop-blur-md p-6 rounded-xl shadow-lg border border-[#b8946e] mb-8 dark:bg-[#1a1a1a] dark:border-[#2d2d2d]">
-        <h2 className="text-xl font-bold text-[#2d6a4f] dark:text-[#4ade80] mb-4">🤖 What are you looking for?</h2>
         <div className="flex gap-4">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="e.g., tomatoes, cassava..."
-            className="flex-1 p-3 border border-[#b8946e] rounded-md focus:ring-2 focus:ring-[#2d6a4f] bg-white/50 dark:bg-[#2d2d2d] dark:border-[#3d3d3d] dark:text-white"
-          />
           <button
-            onClick={handleSearch}
-            disabled={isSearching}
-            className="bg-[#2d6a4f] text-white px-6 py-3 rounded-md hover:bg-[#1b4332] disabled:opacity-50 dark:bg-[#4ade80] dark:text-[#121212] dark:hover:bg-[#3bbd6e]"
+            onClick={() => setShowCart(!showCart)}
+            className="bg-[#1a5d3a] text-white px-4 py-2 rounded-md hover:bg-[#0f3d25] transition flex items-center gap-2"
           >
-            {isSearching ? "🔍 Searching..." : "🔍 Find Farms"}
+            🛒 Cart ({cart.length})
+          </button>
+          <button
+            onClick={() => {
+              localStorage.clear();
+              router.push("/register");
+            }}
+            className="bg-red-500/80 text-white px-4 py-2 rounded-md hover:bg-red-600"
+          >
+            Logout
           </button>
         </div>
       </div>
 
-      {recommendations.length > 0 && (
-        <div className="bg-white/80 backdrop-blur-md p-6 rounded-xl shadow-lg border border-[#b8946e] mb-8 dark:bg-[#1a1a1a] dark:border-[#2d2d2d]">
-          <h2 className="text-xl font-bold text-[#2d6a4f] dark:text-[#4ade80] mb-4">
-            🎯 Recommended Farms for "{searchQuery}"
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recommendations.map((product: any) => (
-              <div key={product.id} className="bg-white p-4 rounded-lg shadow-md border border-[#b8946e] dark:bg-[#2d2d2d] dark:border-[#3d3d3d]">
-                <div className="h-40 bg-[#e9d5b5] rounded-md mb-2 flex items-center justify-center overflow-hidden dark:bg-[#3d3d3d]">
-                  {product.imageUrl?.startsWith("data:") ? (
-                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-4xl">🌾</span>
-                  )}
+      {/* Cart Sidebar */}
+      {showCart && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowCart(false)}></div>
+          <div className="relative bg-white w-full max-w-md p-6 overflow-y-auto shadow-2xl dark:bg-[#1a1a1a]">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-[#1a5d3a] dark:text-[#4ade80]">🛒 Your Cart</h2>
+              <button onClick={() => setShowCart(false)} className="text-2xl hover:text-[#1a5d3a]">✕</button>
+            </div>
+            {cart.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Your cart is empty.</p>
+            ) : (
+              <div className="space-y-4">
+                {cart.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center border-b pb-3 dark:border-[#2d2d2d]">
+                    <div>
+                      <p className="font-bold text-[#1a5d3a] dark:text-[#4ade80]">{item.name}</p>
+                      <p className="text-sm text-gray-500">₦{item.price} × {item.quantity}</p>
+                    </div>
+                    <button onClick={() => removeFromCart(item.id)} className="text-red-500 hover:text-red-700">✕</button>
+                  </div>
+                ))}
+                <div className="pt-4 border-t dark:border-[#2d2d2d]">
+                  <p className="text-xl font-bold text-[#1a5d3a] dark:text-[#4ade80]">Total: ₦{cartTotal}</p>
+                  <button className="w-full mt-4 bg-[#4CAF50] text-white py-3 rounded-md hover:bg-[#388E3C] transition">
+                    Proceed to Checkout
+                  </button>
                 </div>
-                <h3 className="font-bold text-[#2d6a4f] dark:text-[#4ade80]">{product.name}</h3>
-                <p className="text-sm text-[#5a3e2b] dark:text-gray-400">By: {product.farmerName}</p>
-                <p className="text-sm text-[#5a3e2b] dark:text-gray-400">Location: {product.location}</p>
-                <p className="text-[#e2725b] font-bold text-lg">₦{product.price}/{product.unit}</p>
-                <button className="mt-3 w-full bg-[#2d6a4f] text-white py-2 rounded-md hover:bg-[#1b4332] dark:bg-[#4ade80] dark:text-[#121212] dark:hover:bg-[#3bbd6e]">
-                  📞 Contact Farmer
-                </button>
               </div>
-            ))}
+            )}
           </div>
         </div>
       )}
 
-      <div className="bg-white/80 backdrop-blur-md p-6 rounded-xl shadow-lg border border-[#b8946e] dark:bg-[#1a1a1a] dark:border-[#2d2d2d]">
-        <h2 className="text-xl font-bold text-[#2d6a4f] dark:text-[#4ade80] mb-4">📦 My Orders</h2>
-        {getCachedOrMock("orders", MOCK_ORDERS).map((order: any) => (
-          <div key={order.id} className="border border-[#b8946e] rounded-lg p-4 mb-4 dark:border-[#2d2d2d]">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <p className="font-bold text-[#2d6a4f] dark:text-[#4ade80]">{order.productName}</p>
-                <p className="text-sm text-[#5a3e2b] dark:text-gray-400">From: {order.farmerId} | ₦{order.totalPrice}</p>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                order.status === "shipped" ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" :
-                order.status === "pending" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300" :
-                order.status === "delivered" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" :
-                "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-              }`}>
-                {order.status.toUpperCase()}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
-              <div className="h-3 rounded-full bg-[#2d6a4f] dark:bg-[#4ade80]" style={{ width: "60%" }}></div>
-            </div>
-            <div className="flex justify-between text-xs text-[#5a3e2b] dark:text-gray-400 mt-2">
-              <span>📝 Pending</span>
-              <span>📦 Packing</span>
-              <span>🚚 Shipped</span>
-              <span>✅ Delivered</span>
-            </div>
+      {/* Marketplace Link */}
+      <div className="bg-white/80 backdrop-blur-md p-6 rounded-xl shadow-lg border border-[#b8946e] mb-8 dark:bg-[#1a1a1a] dark:border-[#2d2d2d]">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-[#1a5d3a] dark:text-[#4ade80]">🌍 Explore the Global Marketplace</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Browse products from farms across all regions. Find the best deals and fresh produce.</p>
           </div>
-        ))}
+          <Link 
+            href="/dashboard/marketplace" 
+            className="bg-[#1a5d3a] text-white px-6 py-3 rounded-full hover:bg-[#0f3d25] transition"
+          >
+            Go to Marketplace →
+          </Link>
+        </div>
+      </div>
+
+      {/* Local Products (Nearby) */}
+      <div className="bg-white/80 backdrop-blur-md p-6 rounded-xl shadow-lg border border-[#b8946e] dark:bg-[#1a1a1a] dark:border-[#2d2d2d]">
+        <h2 className="text-xl font-bold text-[#1a5d3a] dark:text-[#4ade80] mb-4">🌾 Fresh from Nearby Farms</h2>
+        <MarketplaceGrid 
+          products={products}
+          showDistance={true}
+          buyerLocation={buyerLocation}
+          onAddToCart={addToCart}
+        />
       </div>
     </div>
   );

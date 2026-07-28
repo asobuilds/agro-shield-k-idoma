@@ -40,7 +40,6 @@ export default function HomePage() {
 
       {/* Hero Section with Full-Width Image + Overlay */}
       <div className="relative w-full h-[600px] flex items-center justify-center">
-        {/* Background Image with Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ 
@@ -74,7 +73,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Features Section (Clean Cards) */}
+      {/* Features Section */}
       <div id="features" className="py-20 px-6 max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-[#1a5d3a] text-center mb-12">Why AgroShield?</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -93,6 +92,27 @@ export default function HomePage() {
             <h3 className="text-xl font-bold text-[#1a5d3a] mb-2">Community Trust</h3>
             <p className="text-gray-600">Verified farmers, real-time tracking, and honest reviews from real buyers.</p>
           </div>
+        </div>
+      </div>
+
+      {/* ABOUT US SECTION */}
+      <div id="about" className="py-20 px-6 bg-[#f8f9fa]">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-[#1a5d3a] mb-6">About AgroShield K' Idoma</h2>
+          <p className="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto">
+            AgroShield K' Idoma is a digital marketplace built to bridge the gap between local farmers and the public. 
+            Our mission is to <span className="font-bold text-[#1a5d3a]">empower smallholder farmers</span> by giving them direct access to buyers, 
+            and to <span className="font-bold text-[#1a5d3a]">empower buyers</span> with fresh, affordable, and transparent food sourcing.
+          </p>
+          <p className="text-md text-gray-600 mt-4 max-w-xl mx-auto">
+            We believe in fair prices, community trust, and a future where no farmer struggles to sell their harvest.
+          </p>
+          
+          {!isLoggedIn && (
+            <Link href="/register" className="inline-block mt-8 bg-[#1a5d3a] text-white px-8 py-3 rounded-full hover:bg-[#0f3d25] transition">
+              Join Our Community →
+            </Link>
+          )}
         </div>
       </div>
 
