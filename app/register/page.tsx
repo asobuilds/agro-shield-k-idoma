@@ -18,6 +18,8 @@ export default function RegisterPage() {
   const [businessType, setBusinessType] = useState("");
 
   const handleRegister = () => {
+    console.log("Button clicked!"); // <-- This will appear in your browser console
+
     setLoading(true);
     setError("");
 
@@ -48,8 +50,12 @@ export default function RegisterPage() {
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("isLoggedIn", "true");
 
-    // FORCE HARD REDIRECT (No Next.js, no React, no cache)
-    window.location.href = `/dashboard/${role}`;
+    console.log("Redirecting to /dashboard/" + role); // <-- Check console
+
+    // FORCE HARD REDIRECT (0ms delay, direct browser navigation)
+    setTimeout(() => {
+      window.location.href = `/dashboard/${role}`;
+    }, 0);
   };
 
   return (
@@ -169,7 +175,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          {/* BUTTON INSTEAD OF SUBMIT */}
+          {/* RAW BUTTON WITH LOGGING */}
           <button
             onClick={handleRegister}
             disabled={loading}
