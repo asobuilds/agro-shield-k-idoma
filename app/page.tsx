@@ -17,7 +17,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Professional Navigation Bar */}
       <nav className="bg-white shadow-md px-8 py-4 flex justify-between items-center sticky top-0 z-50">
         <div className="text-2xl font-bold text-[#1a5d3a] flex items-center gap-2">
           <span className="text-3xl">🌾</span> AgroShield
@@ -38,12 +37,12 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero Section with Full-Width Image + Overlay */}
+      {/* Hero Section with FARM BASKET IMAGE */}
       <div className="relative w-full h-[600px] flex items-center justify-center">
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ 
-            backgroundImage: "url('https://images.unsplash.com/photo-1592419044706-39796d40f98c?q=80&w=2070&auto=format&fit=crop')" 
+            backgroundImage: "url('https://images.unsplash.com/photo-1595853035070-59a39fe84de3?q=80&w=2070&auto=format&fit=crop')" 
           }}
         >
           <div className="absolute inset-0 bg-black/40"></div>
@@ -73,7 +72,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Features Section */}
       <div id="features" className="py-20 px-6 max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-[#1a5d3a] text-center mb-12">Why AgroShield?</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -95,7 +93,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ABOUT US SECTION */}
       <div id="about" className="py-20 px-6 bg-[#f8f9fa]">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-[#1a5d3a] mb-6">About AgroShield K' Idoma</h2>
@@ -116,7 +113,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="bg-[#0f3d25] text-white py-12 text-center">
         <p className="text-lg mb-2">🌾 AgroShield K' Idoma</p>
         <p className="text-sm opacity-70">© 2026 Bridging Farmers to the Public.</p>
